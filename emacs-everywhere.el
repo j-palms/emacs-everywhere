@@ -69,7 +69,7 @@
      (list "powershell" "-NoProfile" "-Command"
            "& {(New-Object -ComObject wscript.shell).SendKeys(\"^v\")}"))
     ('x11 (list "xdotool" "key" "--clearmodifiers" "Shift+Insert"))
-    ('wayland (list "ydotool" "key" "42:1" "110:1" "42:0" "110:0"))
+    ('wayland (list "dotool"))
     ('unknown
      (list "notify-send"
            "No paste command defined for emacs-everywhere"
@@ -427,7 +427,9 @@ Never paste content when ABORT is non-nil."
                    emacs-everywhere-paste-command
                    (not abort))
           (apply #'call-process (car emacs-everywhere-paste-command)
-                 nil nil nil (cdr emacs-everywhere-paste-command)))))
+                 (if (cdr emacs-everywhere-paste-command) nil
+                   (make-temp-file nil nil nil "key shift+insert")) nil nil
+                   (cdr emacs-everywhere-paste-command)))))
     ;; Clean up after ourselves in case the buffer survives `server-buffer-done'
     ;; (b/c `server-existing-buffer' is non-nil).
     (emacs-everywhere-mode -1)
@@ -481,8 +483,6 @@ Please go to 'System Preferences > Security & Privacy > Privacy > Accessibility'
     (_ (user-error "Unable to fetch app info with display server %S" emacs-everywhere--display-server))))
 
 
-;; Notes:
-;; - ydotoold must be running: run $ ydotoold &
 (defun emacs-everywhere--app-info-linux-sway ()
   "Return information on the current active window, on a Linux Sway session."
   (let* ((json-string (emacs-everywhere--call "sh" "-c" "swaymsg -t get_tree | jq '.. | select(.type?) | select(.focused==true)'"))
