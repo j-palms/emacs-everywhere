@@ -786,14 +786,14 @@ Should end in a newline to avoid interfering with the buffer content."
          (feat-cmds
           (append var-cmds de-cmds))
          executable-list)
-    (dolist (feat-cmd (delq nil feat-cmds))
-      (when (cdr feat-cmd)
-        (when (and (equal (cadr feat-cmd) "sh")
-                   (equal (caddr feat-cmd) "-c"))
-          (setcdr feat-cmd (split-string (cadddr feat-cmd))))
-        (push (cons (cadr feat-cmd) (car feat-cmd))
-              executable-list)))
-    executable-list))
+      (dolist (feat-cmd (delq nil feat-cmds))
+        (when (cdr feat-cmd)
+          (when (and (equal (cadr feat-cmd) "sh")
+                     (equal (caddr feat-cmd) "-c"))
+            (setcdr feat-cmd (split-string (cadddr feat-cmd))))
+          (push (cons (cadr feat-cmd) (car feat-cmd))
+                executable-list)))
+      executable-list))
 
 (defun emacs-everywhere-check-health ()
   "Check whether emacs-everywhere has everything it needs."
