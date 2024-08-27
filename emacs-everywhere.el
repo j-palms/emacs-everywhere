@@ -111,6 +111,7 @@ it worked can be a good idea."
                            "& {Add-Type 'using System; using System.Runtime.InteropServices; public class Tricks { [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr hWnd); }'; [tricks]::SetForegroundWindow(%w) }"))
     (`(x11 . ,_) (list "xdotool" "windowactivate" "--sync" "%w"))
     (`(wayland . sway) (list "swaymsg" "[con_id=%w]" "focus"))
+    (`(wayland . Hyprland) (list "hyprctl" "dispatch" "focuswindow" "address:%w"))
     (`(wayland . KDE) (list "kdotool" "windowactivate" "%w"))) ; No --sync
   "Command to refocus the active window when emacs-everywhere was triggered.
 This is given as a list in the form (CMD ARGS...).
@@ -237,6 +238,7 @@ Make sure that it will be matched by `emacs-everywhere-file-patterns'."
     (`(windows . ,_) #'emacs-everywhere--app-info-windows)
     (`(x11 . ,_) #'emacs-everywhere--app-info-linux-x11)
     (`(wayland . sway) #'emacs-everywhere--app-info-linux-sway)
+    (`(wayland . Hyprland) #'emacs-everywhere--app-info-linux-hyprland)
     (`(wayland . KDE) #'emacs-everywhere--app-info-linux-kde))
   "Function that asks the system for information on the current foreground app.
 On most systems, this should be set to a sensible default, but it
@@ -483,6 +485,7 @@ Please go to 'System Preferences > Security & Privacy > Privacy > Accessibility'
     (`(x11 . ,_) (emacs-everywhere--app-info-linux-x11))
     (`(wayland . KDE) (emacs-everywhere--app-info-linux-kde))
     (`(wayland . sway) (emacs-everywhere--app-info-linux-sway))
+    (`(wayland . Hyprland) (emacs-everywhere--app-info-linux-hyprland))
     (_ (user-error "Unable to fetch app info with display server %S" emacs-everywhere--display-server))))
 
 
@@ -499,6 +502,24 @@ Please go to 'System Preferences > Security & Privacy > Privacy > Accessibility'
                            (cdr (assoc 'y tmp-window-geometry))
                            (cdr (assoc 'width tmp-window-geometry))
                            (cdr (assoc 'height tmp-window-geometry)))))
+    (make-emacs-everywhere-app
+     :id window-id
+     :class app-name
+     :title window-title
+     :geometry window-geometry)))
+
+
+(defun emacs-everywhere--app-info-linux-hyprland ()
+  "Return information on the current active window, on a Linux Hyprland session."
+  (let* ((json-string (emacs-everywhere--call "hyprctl" "-j" "activewindow"))
+         (json-object (json-read-from-string json-string))
+         (window-id (cdr (assoc 'address json-object)))
+         (app-name (cdr (assoc 'class json-object)))
+         (window-title (cdr (assoc 'title json-object)))
+         (window-geometry (list (aref (cdr (assoc 'at json-object)) 0)
+                                (aref (cdr (assoc 'at json-object)) 1)
+                                (aref (cdr (assoc 'size json-object)) 0)
+                                (aref (cdr (assoc 'size json-object)) 1))))
     (make-emacs-everywhere-app
      :id window-id
      :class app-name
